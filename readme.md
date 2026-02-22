@@ -15,7 +15,6 @@
 [![Flask](https://img.shields.io/badge/Flask-2.x-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://mysql.com)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
-[![AWS](https://img.shields.io/badge/AWS-EC2%20%2F%20S3-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com)
 [![License](https://img.shields.io/badge/Licencia-Propietaria-red?style=for-the-badge)](.)
 
 <br/>
@@ -419,7 +418,7 @@ docker-compose restart nginx
 | Base de datos | MySQL 8 |
 | Proxy / SSL | Nginx + Let's Encrypt |
 | Infraestructura | Docker, Docker Compose |
-| Cloud | AWS EC2, S3 |
+| Cloud | VPS Ubuntu 24.04 LTS |
 | PDF (etiquetas) | ReportLab |
 | Frontend | HTML, CSS, JavaScript |
 
@@ -439,6 +438,6 @@ docker-compose restart nginx
 
 **Escaner-POS** · Hecho con 🧉 desde Buenos Aires, Argentina
 
-*© 2025 ComparApp Argentina — Todos los derechos reservados*
+*© 2026 Joaquin Papagianacopoulos — Todos los derechos reservados*
 
 </div>
