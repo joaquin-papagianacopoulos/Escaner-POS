@@ -1,176 +1,189 @@
-# 🏢 ComparApp SaaS - Sistema Multicliente de Gestión de Precios
+<div align="center">
 
-Sistema web para actualización centralizada de precios que los sistemas POS consumen vía API.
+```
+███████╗███████╗ ██████╗ █████╗ ███╗   ██╗███████╗██████╗       ██████╗  ██████╗ ███████╗
+██╔════╝██╔════╝██╔════╝██╔══██╗████╗  ██║██╔════╝██╔══██╗      ██╔══██╗██╔═══██╗██╔════╝
+█████╗  ███████╗██║     ███████║██╔██╗ ██║█████╗  ██████╔╝█████╗██████╔╝██║   ██║███████╗
+██╔══╝  ╚════██║██║     ██╔══██║██║╚██╗██║██╔══╝  ██╔══██╗╚════╝██╔═══╝ ██║   ██║╚════██║
+███████╗███████║╚██████╗██║  ██║██║ ╚████║███████╗██║  ██║      ██║     ╚██████╔╝███████║
+╚══════╝╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝      ╚═╝      ╚═════╝ ╚══════╝
+```
+
+### 🔍 Sistema Web de Escaneo de Códigos de Barras con Integración POS
+
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-2.x-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://mysql.com)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
+[![AWS](https://img.shields.io/badge/AWS-EC2%20%2F%20S3-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com)
+[![License](https://img.shields.io/badge/Licencia-Propietaria-red?style=for-the-badge)](.)
+
+<br/>
+
+> **Actualizá precios, gestioná productos y generá etiquetas de góndola**  
+> **desde cualquier dispositivo — sin tocar la computadora de caja.**
+
+</div>
 
 ---
 
-## 🎯 Características
+## 📌 ¿Qué es Escaner-POS?
 
-✅ **Multicliente**: Un cliente = un subdominio = una base de datos  
-✅ **Autenticación simple**: Token Bearer por cliente  
-✅ **Aislamiento total**: Cada cliente tiene su propia BD  
-✅ **Alta/baja instantánea**: Activar/desactivar clientes sin reiniciar  
-✅ **API REST**: Endpoints para POS y administración web  
-✅ **SSL automático**: Let's Encrypt con wildcard subdominios  
+**Escaner-POS** es una plataforma SaaS **multicliente** que permite a supermercados y comercios gestionar su catálogo de productos de forma centralizada. El sistema POS del local consume los precios actualizados vía API REST, eliminando la necesidad de intervenir físicamente en la caja registradora para cada cambio.
+
+```
+          CELULAR / TABLET                     CAJA REGISTRADORA
+        ┌─────────────────┐                   ┌──────────────────┐
+        │  📷 Escanear     │                   │   💻 POS / Caja  │
+        │  código barras  │                   │                  │
+        │                 │   ┌───────────┐   │  consulta precio │
+        │  ✏️  Editar       ├──►│  API REST │◄──│  en tiempo real  │
+        │  precio/nombre  │   │  (Flask)  │   │                  │
+        │                 │   └─────┬─────┘   └──────────────────┘
+        │  🏷️  Generar      │         │
+        │  etiqueta PDF   │   ┌─────▼─────┐
+        └─────────────────┘   │  MySQL DB │
+                              │ por cliente│
+                              └───────────┘
+```
+
+---
+
+## ✨ Características Principales
+
+| Feature | Descripción |
+|---|---|
+| 📱 **Escáner Web** | Lector de códigos de barras desde la cámara del celular/tablet, sin apps nativas |
+| 🏢 **Multicliente** | Cada comercio tiene su propio subdominio y base de datos aislada |
+| 🔄 **Sincronización en tiempo real** | Los cambios de precio se reflejan instantáneamente en el POS |
+| 🏷️ **Generador de etiquetas** | Crea etiquetas de góndola en PDF listas para imprimir |
+| 🔐 **Auth por Bearer Token** | Cada cliente tiene un token único de 32 caracteres |
+| 🌐 **SSL automático** | Certificados wildcard via Let's Encrypt por subdominio |
+| ⚡ **Alta/baja instantánea** | Activar o desactivar clientes sin reiniciar el servidor |
+| 📊 **Logs de acceso** | Auditoría completa de requests por cliente |
 
 ---
 
 ## 🏗️ Arquitectura
 
 ```
-comparappargentina.com          → Admin/Landing
-cliente1.comparappargentina.com → Cliente 1
-cliente2.comparappargentina.com → Cliente 2
+comparappargentina.com                →  Panel de administración / Landing
+cliente1.comparappargentina.com       →  Supermercado 1
+cliente2.comparappargentina.com       →  Supermercado 2
+sanmartin.comparappargentina.com      →  Supermercado San Martín
+          ...
 ```
 
-### Base de Datos
+### Flujo de autenticación
 
-- **`comparapp_admin`**: Tabla de clientes, logs, tokens
-- **`cliente_X`**: Una BD por cliente con tabla `products`
+```
+  Request  ──►  Nginx  ──►  Flask extrae subdominio
+                               │
+                               ▼
+                    Busca cliente en comparapp_admin
+                               │
+                    ┌──────────┴──────────┐
+                    │  Valida Bearer Token │
+                    └──────────┬──────────┘
+                               │
+              ┌────────────────┴─────────────────┐
+              │ ✅ Válido                          │ ❌ Inválido
+              ▼                                   ▼
+    Conecta a cliente_X_db                   401 / 403
+    y procesa el request
+```
 
-### Flujo de Autenticación
+### Base de datos
 
-1. Request llega a `cliente1.comparappargentina.com`
-2. Nginx pasa Host header a Flask
-3. Flask extrae subdominio → busca cliente en `comparapp_admin`
-4. Valida token del header `Authorization: Bearer XXX`
-5. Si válido → conecta a `cliente1_db` y procesa request
-6. Si inválido → 401/403
+- **`comparapp_admin`** — Tabla de clientes, tokens, logs de acceso
+- **`cliente_X`** — Una base de datos independiente por cliente con tabla `products`
 
 ---
 
 ## 🚀 Instalación
 
-### 1. Requisitos Previos
+### Requisitos previos
 
 ```bash
-# Instalar dependencias
 apt update
 apt install -y docker docker-compose python3-pip mysql-client
 
-# Python dependencies
 pip3 install flask pymysql gunicorn
 ```
 
-### 2. Configurar Base de Datos
+### 1. Clonar el repositorio
 
 ```bash
-# Conectar a MySQL
-mysql -u root -p
-
-# Ejecutar script de setup
-source setup_database.sql
+git clone https://github.com/tu-usuario/escaner-pos.git
+cd escaner-pos
 ```
 
-Esto crea:
-- BD `comparapp_admin` con tabla de clientes
-- 2 clientes de ejemplo con sus BDs
+### 2. Variables de entorno
 
-### 3. Variables de Entorno
+Crear archivo `.env` en la raíz:
 
-Crear `.env`:
-
-```bash
+```env
 MYSQL_ROOT_PASSWORD=tu_password_seguro
 FLASK_SECRET_KEY=tu_secret_key_random
 ```
 
-### 4. Configurar DNS Wildcard
-
-En tu proveedor de DNS (Cloudflare, Route53, etc.):
-
-```
-Type    Name                          Value
-A       comparappargentina.com        123.45.67.89
-A       *.comparappargentina.com      123.45.67.89
-```
-
-### 5. Obtener Certificado SSL Wildcard
+### 3. Configurar base de datos
 
 ```bash
-# Instalar certbot
+mysql -u root -p
+source setup_database.sql
+```
+
+Esto crea automáticamente:
+- Base de datos `comparapp_admin` con tabla de clientes
+- 2 clientes de ejemplo con sus respectivas bases de datos
+
+### 4. Configurar DNS Wildcard
+
+En tu proveedor DNS (Cloudflare, Route53, etc.):
+
+```
+Type    Name                        Value
+A       comparappargentina.com      123.45.67.89
+A       *.comparappargentina.com    123.45.67.89
+```
+
+### 5. Obtener certificado SSL Wildcard
+
+```bash
 apt install certbot
 
-# Obtener certificado wildcard (requiere validación DNS manual)
 certbot certonly --manual --preferred-challenges dns \
   -d comparappargentina.com \
   -d *.comparappargentina.com
-
-# Seguir instrucciones para agregar registro TXT en DNS
 ```
 
-### 6. Iniciar Servicios
+### 6. Levantar servicios
 
 ```bash
-# Con Docker Compose
+# Con Docker Compose (recomendado)
 docker-compose up -d
 
-# O manualmente
+# O directamente
 python3 app.py
 ```
 
 ---
 
-## 🔧 Administración de Clientes
-
-### CLI de Administración
-
-```bash
-python3 admin_cliente.py
-```
-
-**Menú de opciones:**
-
-1. **Listar clientes**: Ver todos los clientes activos e inactivos
-2. **Crear cliente**: Alta de nuevo cliente con BD automática
-3. **Ver token**: Mostrar token de acceso
-4. **Cambiar token**: Generar nuevo token
-5. **Activar/Desactivar**: Control instantáneo de acceso
-6. **Eliminar cliente**: Borra cliente y su BD (irreversible)
-
-### Crear Cliente Nuevo
-
-```bash
-# Ejecutar script
-python3 admin_cliente.py
-
-# Seleccionar opción 2
-📝 Nombre del cliente: Supermercado San Martin
-🌐 Subdominio: sanmartin
-
-# El sistema crea:
-✅ Base de datos: cliente_sanmartin
-✅ Tabla products
-✅ Token: abc123xyz789...
-✅ URL: https://sanmartin.comparappargentina.com
-```
-
-**Entregar al cliente:**
-- URL de acceso
-- Token de autenticación
-
----
-
 ## 📡 API Reference
 
-### Autenticación
+Todos los endpoints requieren:
 
-Todos los endpoints protegidos requieren:
-
-```bash
+```http
 Authorization: Bearer <token_del_cliente>
 Host: <subdominio>.comparappargentina.com
 ```
 
-### Endpoints Principales
+### Endpoints
 
-#### 1. Obtener Producto
+#### `GET /api/producto/<codigo>`
+Obtener un producto por código de barras.
 
-```bash
-GET /api/producto/<codigo>
-```
-
-**Respuesta:**
 ```json
 {
   "encontrado": true,
@@ -182,12 +195,10 @@ GET /api/producto/<codigo>
 }
 ```
 
-#### 2. Guardar/Actualizar Producto
+#### `POST /api/producto`
+Crear o actualizar un producto.
 
-```bash
-POST /api/producto
-Content-Type: application/json
-
+```json
 {
   "code": "7790895000010",
   "name": "Coca Cola 2.25L",
@@ -197,25 +208,15 @@ Content-Type: application/json
 }
 ```
 
-#### 3. Eliminar Producto
+#### `DELETE /api/producto/<codigo>`
+Eliminar un producto del catálogo.
 
-```bash
-DELETE /api/producto/<codigo>
-```
+#### `GET /api/productos`
+Listar todos los productos del cliente.
 
-#### 4. Listar Productos
+#### `GET /api/pos/precio/<codigo>` — *Endpoint para POS*
+Consulta pública simplificada, pensada para integrar directamente con el sistema de caja.
 
-```bash
-GET /api/productos
-```
-
-#### 5. Endpoint para POS (consulta pública)
-
-```bash
-GET /api/pos/precio/<codigo>
-```
-
-**Respuesta simplificada para POS:**
 ```json
 {
   "encontrado": true,
@@ -225,239 +226,219 @@ GET /api/pos/precio/<codigo>
 }
 ```
 
-#### 6. Info del Cliente
+#### `GET /api/health`
+Health check del servicio.
 
-```bash
-GET /api/info-cliente
-```
-
----
-
-## 🔒 Seguridad
-
-### Implementado
-
-✅ **HTTPS obligatorio**: Certificados SSL Let's Encrypt  
-✅ **Token único por cliente**: 32 caracteres random  
-✅ **Validación de subdominio**: No se puede acceder a datos de otro cliente  
-✅ **Rate limiting**: Nginx limita requests por IP  
-✅ **Headers de seguridad**: HSTS, X-Frame-Options, etc.  
-✅ **Logs de acceso**: Auditoría opcional por cliente  
-
-### Recomendaciones
-
-- **Rotar tokens periódicamente** (cada 3-6 meses)
-- **Monitorear logs** de `comparapp_admin.logs_acceso`
-- **Backups automáticos** de cada BD de cliente
-- **Firewall**: Solo puertos 80, 443, 22 abiertos
-- **VPN opcional**: Para acceso administrativo
-
----
-
-## 📊 Monitoreo
-
-### Health Check
-
-```bash
-curl https://cliente.comparappargentina.com/api/health
-```
-
-Respuesta:
 ```json
-{
-  "status": "ok",
-  "service": "comparapp"
-}
+{ "status": "ok", "service": "comparapp" }
 ```
 
-### Logs
+---
+
+## 🔧 Administración de Clientes
 
 ```bash
-# Logs de aplicación
-docker logs -f comparapp_app
-
-# Logs de Nginx
-docker logs -f comparapp_nginx
-
-# Logs de MySQL
-docker logs -f comparapp_mysql
+python3 admin_cliente.py
 ```
 
-### Métricas en Base de Datos
+| Opción | Acción |
+|--------|--------|
+| 1 | Listar todos los clientes (activos e inactivos) |
+| 2 | Crear cliente nuevo con BD automática |
+| 3 | Ver token de acceso |
+| 4 | Regenerar token |
+| 5 | Activar / Desactivar cliente |
+| 6 | ⚠️ Eliminar cliente y su BD (irreversible) |
 
-```sql
-USE comparapp_admin;
+**Ejemplo — dar de alta un cliente:**
 
--- Total de clientes
-SELECT COUNT(*) FROM clientes;
+```bash
+python3 admin_cliente.py
+# Seleccionar opción 2
 
--- Clientes activos
-SELECT COUNT(*) FROM clientes WHERE activo = 1;
+📝 Nombre del cliente: Supermercado San Martin
+🌐 Subdominio: sanmartin
 
--- Accesos en última hora
-SELECT cliente_id, COUNT(*) as requests
-FROM logs_acceso
-WHERE timestamp > NOW() - INTERVAL 1 HOUR
-GROUP BY cliente_id;
+✅ Base de datos: cliente_sanmartin
+✅ Tabla products creada
+✅ Token: abc123xyz789...
+✅ URL: https://sanmartin.comparappargentina.com
 ```
 
 ---
 
 ## 🔄 Integración con POS
 
-### Ejemplo: Unicenta/Chromis
-
-Modificar script SQL de Unicenta para consultar API:
+Ejemplo de integración con Unicenta / Chromis u otro sistema POS:
 
 ```python
 import requests
 
 def obtener_precio(codigo_barras):
     url = f"https://micliente.comparappargentina.com/api/pos/precio/{codigo_barras}"
-    headers = {
-        "Authorization": "Bearer mi_token_secreto"
-    }
-    
+    headers = {"Authorization": "Bearer mi_token_secreto"}
+
     try:
         response = requests.get(url, headers=headers, timeout=5)
         if response.ok:
             data = response.json()
             if data['encontrado']:
                 return data['precio']
-    except:
+    except Exception:
         pass
-    
-    # Fallback a precio local si API falla
+
+    # Fallback a precio local si la API no responde
     return consultar_precio_local(codigo_barras)
 ```
 
 ---
 
+## 🔒 Seguridad
+
+- ✅ HTTPS obligatorio con certificados Let's Encrypt
+- ✅ Token único de 32 caracteres por cliente
+- ✅ Validación de subdominio — un cliente no puede acceder a datos de otro
+- ✅ Rate limiting configurado en Nginx
+- ✅ Headers de seguridad: HSTS, X-Frame-Options, etc.
+- ✅ Logs de auditoría por cliente
+
+**Buenas prácticas recomendadas:**
+- Rotar tokens cada 3–6 meses
+- Mantener solo los puertos 80, 443 y 22 abiertos en el firewall
+- Configurar backups automáticos (ver sección de mantenimiento)
+
+---
+
 ## 🛠️ Mantenimiento
 
-### Backup Automático
-
-Crear script `backup.sh`:
+### Backup automático
 
 ```bash
 #!/bin/bash
+# backup.sh
 DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="/backups"
 
-# Backup de admin
 mysqldump -u root -p comparapp_admin > $BACKUP_DIR/admin_$DATE.sql
 
-# Backup de cada cliente
 mysql -u root -p -e "SHOW DATABASES LIKE 'cliente_%'" | grep cliente_ | while read db; do
     mysqldump -u root -p $db > $BACKUP_DIR/${db}_$DATE.sql
 done
 
-# Comprimir
 tar -czf $BACKUP_DIR/backup_$DATE.tar.gz $BACKUP_DIR/*.sql
 rm $BACKUP_DIR/*.sql
-
-# Subir a S3/Drive (opcional)
-# rclone copy $BACKUP_DIR/backup_$DATE.tar.gz remote:comparapp-backups/
 ```
 
-Agregar a cron:
+Agregar a cron para ejecutar diariamente a las 3AM:
+
 ```bash
 crontab -e
+# Agregar:
 0 3 * * * /root/backup.sh
 ```
 
-### Actualización de Código
+### Actualizar el código
 
 ```bash
-# Pull cambios
 git pull origin main
-
-# Reiniciar servicios
 docker-compose restart app nginx
 ```
 
----
-
-## 🐛 Troubleshooting
-
-### Error: Cliente no encontrado
-
-**Causa**: Subdominio no existe en `comparapp_admin.clientes`  
-**Solución**: Verificar registro en BD o crear cliente
-
-```sql
-SELECT * FROM comparapp_admin.clientes WHERE subdominio = 'micliente';
-```
-
-### Error: Token inválido
-
-**Causa**: Token incorrecto o cliente desactivado  
-**Solución**: Regenerar token o activar cliente
+### Ver logs en tiempo real
 
 ```bash
-python3 admin_cliente.py
-# Opción 4: Cambiar token
-```
-
-### Error: Base de datos no existe
-
-**Causa**: BD del cliente no fue creada  
-**Solución**: Crearla manualmente
-
-```sql
-CREATE DATABASE cliente_nombre CHARACTER SET utf8mb4;
-USE cliente_nombre;
--- Ejecutar script de tabla products
-```
-
-### Error: SSL certificate
-
-**Causa**: Certificado expirado o no renovado  
-**Solución**: Renovar con certbot
-
-```bash
-certbot renew --force-renewal
-docker-compose restart nginx
+docker logs -f comparapp_app      # Aplicación Flask
+docker logs -f comparapp_nginx    # Nginx
+docker logs -f comparapp_mysql    # MySQL
 ```
 
 ---
 
 ## 📈 Escalabilidad
 
-### Cuando tener más de 50 clientes:
+Para instalaciones con más de 50 clientes simultáneos:
 
-1. **Separar BD por servidor**: Mover clientes grandes a instancias dedicadas
-2. **Load Balancer**: Nginx + múltiples instancias Flask
-3. **Redis para caché**: Cachear consultas frecuentes
-4. **CDN**: Para archivos estáticos
+- **Redis** para cachear consultas frecuentes de productos
+- **Load Balancer** con Nginx + múltiples instancias Flask
+- **BDs dedicadas** para clientes con alto volumen de requests
+- **CDN** para archivos estáticos y PDFs de etiquetas
 
-### Ejemplo con Redis:
+---
 
-```python
-import redis
-r = redis.Redis(host='localhost', port=6379)
+## 🐛 Troubleshooting
 
-def get_producto_cached(code):
-    cached = r.get(f"product:{code}")
-    if cached:
-        return json.loads(cached)
-    
-    producto = execute_client_query(...)
-    r.setex(f"product:{code}", 3600, json.dumps(producto))
-    return producto
+<details>
+<summary><b>❌ Error: Cliente no encontrado</b></summary>
+
+**Causa:** El subdominio no existe en `comparapp_admin.clientes`
+
+```sql
+SELECT * FROM comparapp_admin.clientes WHERE subdominio = 'micliente';
 ```
+Si no aparece, crearlo con `admin_cliente.py` opción 2.
+</details>
+
+<details>
+<summary><b>❌ Error: Token inválido (401/403)</b></summary>
+
+**Causa:** Token incorrecto o cliente desactivado.
+
+```bash
+python3 admin_cliente.py
+# Opción 4: Regenerar token
+# Opción 5: Verificar que el cliente esté activo
+```
+</details>
+
+<details>
+<summary><b>❌ Error: Base de datos no existe</b></summary>
+
+```sql
+CREATE DATABASE cliente_nombre CHARACTER SET utf8mb4;
+USE cliente_nombre;
+-- Ejecutar script de tabla products
+```
+</details>
+
+<details>
+<summary><b>❌ Error: SSL certificate expirado</b></summary>
+
+```bash
+certbot renew --force-renewal
+docker-compose restart nginx
+```
+</details>
 
 ---
 
-## 📝 Licencia
+## 🧰 Stack Tecnológico
 
-Propietario - ComparApp Argentina
+| Capa | Tecnología |
+|------|-----------|
+| Backend | Python 3.10+, Flask |
+| Base de datos | MySQL 8 |
+| Proxy / SSL | Nginx + Let's Encrypt |
+| Infraestructura | Docker, Docker Compose |
+| Cloud | AWS EC2, S3 |
+| PDF (etiquetas) | ReportLab |
+| Frontend | HTML, CSS, JavaScript |
 
 ---
 
-## 📞 Soporte
+## 📞 Contacto
 
-- **Email**: soporte@comparappargentina.com
-- **WhatsApp**: +54 9 11 64703346
-- **Documentación**: https://docs.comparappargentina.com#   E s c a n e r - P O S  
- 
+**Joaquin Papagianacopoulos** — Desarrollador & Co-fundador
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-joaquinpapagianacopoulos-0077B5?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/joaquinpapagianacopoulos/)
+[![Gmail](https://img.shields.io/badge/Gmail-joaquinpapagianacopoulos@gmail.com-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:joaquinpapagianacopoulos@gmail.com)
+[![WhatsApp](https://img.shields.io/badge/WhatsApp-%2B54%209%2011%2064703346-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://wa.me/5491164703346)
+
+---
+
+<div align="center">
+
+**Escaner-POS** · Hecho con 🧉 desde Buenos Aires, Argentina
+
+*© 2025 ComparApp Argentina — Todos los derechos reservados*
+
+</div>
