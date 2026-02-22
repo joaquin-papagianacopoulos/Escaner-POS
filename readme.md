@@ -1,4 +1,4 @@
-![Diseño sin título](https://github.com/user-attachments/assets/b31a51a1-021e-4855-ad58-669ed0a24bdb)![Diseño sin título](https://github.com/user-attachments/assets/6d8ceaf0-c0ca-4548-b3ca-24e139d03521)<div align="center">
+<div align="center">
 
 ```
 ███████╗███████╗ ██████╗ █████╗ ███╗   ██╗███████╗██████╗       ██████╗  ██████╗ ███████╗
@@ -31,7 +31,8 @@
 **Escaner-POS** es una plataforma SaaS **multicliente** que permite a supermercados y comercios gestionar su catálogo de productos de forma centralizada. El sistema POS del local consume los precios actualizados vía API REST, eliminando la necesidad de intervenir físicamente en la caja registradora para cada cambio.
 
 ![Agregar producto desde celular:](https://github.com/user-attachments/assets/29a6b863-a295-482d-ba5c-b1b13fd656d4)
-![Demostración de cambio instantáneo en Sistema POS](https://github.com/user-attachments/assets/68c35605-353d-4ffe-b9f9-19ce2a50b1b8)
+![Demostración de cambio instantáneo en Sistema POS](https://github.com/user-attachments/assets/051af35a-e3c2-4577-8e6d-8e2a361b982b)
+
 
 
 ```
