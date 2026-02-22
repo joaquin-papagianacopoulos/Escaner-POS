@@ -424,7 +424,6 @@ docker-compose restart nginx
 | Proxy / SSL | Nginx + Let's Encrypt |
 | Infraestructura | Docker, Docker Compose |
 | Cloud | VPS Ubuntu 24.04 LTS |
-| PDF (etiquetas) | ReportLab |
 | Frontend | HTML, CSS, JavaScript |
 
 ---
