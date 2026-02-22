@@ -1,0 +1,55 @@
+services:
+  app:
+    image: escaner-app
+    container_name: app
+    restart: always
+    volumes:
+      - ./templates:/app/templates
+    expose:
+      - "5000"
+    networks:
+      - productos_network
+    environment:
+      DB_HOST: mariadb
+      DB_USER: unicenta
+      DB_PASSWORD: unicenta123
+      DB_NAME: unicentaopos
+      DB_PORT: 3306
+
+  mariadb:
+    image: mariadb:10.6
+    container_name: mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_DATABASE: unicentaopos
+      MYSQL_USER: unicenta
+      MYSQL_PASSWORD: unicenta123
+    ports:
+      - "3306:3306"
+    networks:
+      - productos_network
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  productos_nginx:
+    image: nginx:alpine
+    container_name: productos_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - app
+    networks:
+      - productos_network
+
+networks:
+  productos_network:
+    driver: bridge
+
+volumes:
+  mariadb_data:
